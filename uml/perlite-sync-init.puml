@@ -1,0 +1,22 @@
+@startuml init
+autonumber 1.1.1
+User -> perliteSyncClient: open
+perliteSyncClient -> perliteContract: get metadata
+perliteContract --> perliteSyncClient: metadata
+perliteSyncClient -> perliteSyncClient: parse metadata
+perliteSyncClient -> perliteSyncClient: 判断是否需要更新
+
+group 需要更新
+    perliteSyncClient -> perliteSyncClient: 目录-文件名-blobid（文件名一样，blobid不一样,更新）
+end
+
+group 不需要更新
+    perliteSyncClient -> perliteSyncClient: 没有，生成data.json文件
+    perliteSyncClient -> perliteSyncClient: 下载文件
+end
+group 新仓库直接下载
+    perliteSyncClient -> perliteSyncClient: 没有，生成data.json文件
+    perliteSyncClient -> perliteSyncClient: 下载文件
+end
+
+@enduml
