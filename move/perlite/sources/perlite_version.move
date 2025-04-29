@@ -2,6 +2,7 @@ module perlite::perlite_version{
     use sui::object::{Self, UID, ID};
     use sui::vec_set::VecSet;
     use perlite::perlite_market::PerliteAdminCap;
+    
 
     public struct GlobalConfig has key {
         id: UID,
