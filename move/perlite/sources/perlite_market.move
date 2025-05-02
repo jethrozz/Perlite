@@ -13,7 +13,9 @@ module perlite::perlite_market {
     }
 
     public struct Market has key, store{
-
+        id: UID,
+        cut: u64, //非买断手续费 10000 = 100% 
+        buyout_cut_fee: u64, //买断手续费: 10000 = 100%
     }
 
     public struct MarketConfig has key {
@@ -93,6 +95,10 @@ module perlite::perlite_market {
         market_config.support_pay_type.insert(1);
         market_config.support_pay_type.insert(2);
         transfer::share_object(market_config, ctx.sender());
+
+        //买断抽成千分之3，非买断抽成千分之1 
+        let market = Market { id: object::new(ctx), cut: 10, buyout_cut_fee: 30};
+        transfer::public_transfer(market, ctx.sender());
     }
 
 
@@ -241,6 +247,7 @@ module perlite::perlite_market {
         }
 
     public fun subscription_column<coin_type>(
+        market: &Market,
         column: &mut Column,
         payment_method: &PaymentMethod,
         fee: Coin<coin_type>, //支付费用
