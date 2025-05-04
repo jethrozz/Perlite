@@ -2,3 +2,4 @@ dist
 node_moudle
 build
 *.env
+*.lock
