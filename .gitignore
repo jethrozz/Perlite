@@ -3,3 +3,6 @@ node_moudle
 build
 *.env
 *.lock
+node_moudles/*
+*.log
+./node_moudles/*

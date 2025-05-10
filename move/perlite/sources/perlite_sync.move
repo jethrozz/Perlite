@@ -9,8 +9,6 @@ module perlite::perlite_sync {
         name: String,
         parent: ID,
         is_root: bool,
-        files: vector<ID>,
-        directories: vector<ID>,
         created_at: u64,
         updated_at: u64,
     }
@@ -20,6 +18,7 @@ module perlite::perlite_sync {
         title: String,
         belong_dir: ID,
         blob_id: String,
+        end_epoch: String,
         created_at: u64,
         updated_at: u64,
     }
@@ -32,20 +31,19 @@ module perlite::perlite_sync {
             name,
             parent: parent_id,
             is_root: true,
-            files: vector::empty(),
-            directories: vector::empty(),
             created_at: now,
             updated_at: now,
         }
     }
 
-    public fun new_file(title: String, blob_id: String, dir : &mut Directory,clock: &Clock, ctx: &mut TxContext): File {
+    public fun new_file(title: String, blob_id: String, end_epoch: String, dir : &mut Directory,clock: &Clock, ctx: &mut TxContext): File {
         let now = clock.timestamp_ms();
         let  dir_id = object::id(dir);
         File {
             id: object::new(ctx),
             title,
             blob_id,
+            end_epoch,
             belong_dir: dir_id,
             created_at: now,
             updated_at: now,
@@ -67,11 +65,48 @@ module perlite::perlite_sync {
             id: object::new(ctx),
             name,
             parent: parent_id,
-            is_root: true,
-            files: vector::empty(),
-            directories: vector::empty(),
+            is_root: false,
             created_at: now,
             updated_at: now,
         }
+    }
+
+    public fun update_directory(name: String, is_root: bool, dir: &mut Directory, clock: &Clock, ctx: &mut TxContext) {
+        let now = clock.timestamp_ms();
+        dir.updated_at = now;
+        dir.name = name;
+        dir.is_root = is_root;
+    }
+
+    public fun update_file(title: String, blob_id: String, file: &mut File, clock: &Clock, ctx: &mut TxContext) {
+        let now = clock.timestamp_ms();
+        file.updated_at = now;
+        file.title = title;
+        file.blob_id = blob_id;
+    }
+    public fun delete_file(file: &mut File, ctx: &mut TxContext) {
+        object::delete(file.id);
+    }
+
+    public fun delete_directory(dir: &mut Directory, ctx: &mut TxContext) {
+         let Ticket {
+         id,
+         expiration_time: _,
+     } = ticket;
+        object::delete(dir.id);
+    }
+
+    public fun move_file(file: &mut File, new_dir: &Directory, clock: &Clock, ctx: &mut TxContext) {
+        let now = clock.timestamp_ms();
+        let id = object::id(new_dir);
+        file.belong_dir = id;
+        file.updated_at = now;
+    }
+
+    public fun move_directory(dir: &mut Directory, new_parent_dir: &Directory, clock: &Clock, ctx: &mut TxContext) {
+        let now = clock.timestamp_ms();
+        let id = object::id(new_parent_dir);
+        dir.parent = id;
+        dir.updated_at = now;
     }
 }

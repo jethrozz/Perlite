@@ -1,16 +1,92 @@
 import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
-import { isValidSuiObjectId } from "@mysten/sui/utils";
 import { Box, Container, Flex, Heading } from "@radix-ui/themes";
-import { useState } from "react";
-import { Counter } from "./Counter";
-import { CreateCounter } from "./CreateCounter";
+import { useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit";
+import { useNetworkVariable } from "./networkConfig";
+import { Transaction } from "@mysten/sui/transactions";
+import { Button } from "@radix-ui/themes";
 
+import ClipLoader from "react-spinners/ClipLoader";
 function App() {
-  const currentAccount = useCurrentAccount();
-  const [counterId, setCounter] = useState(() => {
-    const hash = window.location.hash.slice(1);
-    return isValidSuiObjectId(hash) ? hash : null;
-  });
+    const currentAccount = useCurrentAccount();
+    console.log("currentAccount", currentAccount);
+    const address = currentAccount?.address;
+    const counterPackageId = useNetworkVariable("counterPackageId");
+    const suiClient = useSuiClient();
+    const {
+        mutate: signAndExecute,
+        isSuccess,
+        isPending,
+    } = useSignAndExecuteTransaction();
+
+    function createVault() {
+        if (!address) {
+            return;
+        }
+        const tx = new Transaction();
+        let name = "MyVault";
+        const rootdir = tx.moveCall({
+            arguments: [tx.pure.string(name), tx.object("0x6")],
+            target: `${counterPackageId}::perlite_sync::new_root_directory`,
+        });
+        tx.moveCall({
+            target: `${counterPackageId}::perlite_sync::transfer_dir`,
+            arguments: [tx.object(rootdir), tx.pure.address(address)],
+        });
+        
+
+        signAndExecute(
+            {
+                transaction: tx,
+            },
+            {
+                onSuccess: async ({ digest }) => {
+                    const { effects } = await suiClient.waitForTransaction({
+                        digest: digest,
+                        options: {
+                            showEffects: true,
+                        },
+                    });
+
+                    console.log("createVault,", effects?.created?.[0]?.reference?.objectId!);
+                },
+            },
+        );
+    }
+
+    function createChild() {
+        if (!address) {
+            return;
+        }
+        const tx = new Transaction();
+        let childname = "child_dir1";
+        let rootdir = "0x9f7a18bb476aab6de7873181f04cefcee1cfe1e4f56a8fb5bf87c4925f8c2450";
+        const child_dir = tx.moveCall({
+            arguments: [tx.pure.string(childname), tx.object(rootdir), tx.object("0x6")],
+            target: `${counterPackageId}::perlite_sync::new_directory`,
+        });
+        tx.moveCall({
+            target: `${counterPackageId}::perlite_sync::transfer_dir`,
+            arguments: [tx.object(child_dir), tx.pure.address(address)],
+        });
+
+        signAndExecute(
+            {
+                transaction: tx,
+            },
+            {
+                onSuccess: async ({ digest }) => {
+                    const { effects } = await suiClient.waitForTransaction({
+                        digest: digest,
+                        options: {
+                            showEffects: true,
+                        },
+                    });
+
+                    console.log("create child,", effects?.created?.[0]?.reference?.objectId!);
+                },
+            },
+        );
+    }
 
   return (
     <>
@@ -32,26 +108,25 @@ function App() {
         </Box>
       </Flex>
       <Container>
-        <Container
-          mt="5"
-          pt="2"
-          px="4"
-          style={{ background: "var(--gray-a2)", minHeight: 500 }}
-        >
-          {currentAccount ? (
-            counterId ? (
-              <Counter id={counterId} />
-            ) : (
-              <CreateCounter
-                onCreated={(id) => {
-                  window.location.hash = id;
-                  setCounter(id);
-                }}
-              />
-            )
-          ) : (
-            <Heading>Please connect your wallet</Heading>
-          )}
+        <Container>
+                  {/* <Button
+                      size="3"
+                      onClick={() => {
+                          createVault();
+                      }}
+                      disabled={isSuccess || isPending}
+                  >
+                      {isSuccess || isPending ? <ClipLoader size={20} /> : "Create Vault"}
+                  </Button> */}
+
+                  <Button
+                      size="3"
+                      onClick={() => {
+                          createChild();
+                      }}
+                  >
+                      Create child
+                  </Button>
         </Container>
       </Container>
     </>
