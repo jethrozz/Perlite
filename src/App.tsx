@@ -11,6 +11,7 @@ function App() {
     console.log("currentAccount", currentAccount);
     const address = currentAccount?.address;
     const counterPackageId = useNetworkVariable("counterPackageId");
+    const rootdir = useNetworkVariable("rootdir");
     const suiClient = useSuiClient();
     const {
         mutate: signAndExecute,
@@ -57,9 +58,11 @@ function App() {
         if (!address) {
             return;
         }
+        if(rootdir === '0'){
+            return
+        }
         const tx = new Transaction();
         let childname = "child_dir1";
-        let rootdir = "0x9f7a18bb476aab6de7873181f04cefcee1cfe1e4f56a8fb5bf87c4925f8c2450";
         const child_dir = tx.moveCall({
             arguments: [tx.pure.string(childname), tx.object(rootdir), tx.object("0x6")],
             target: `${counterPackageId}::perlite_sync::new_directory`,
@@ -109,7 +112,7 @@ function App() {
       </Flex>
       <Container>
         <Container>
-                  {/* <Button
+                  { <Button
                       size="3"
                       onClick={() => {
                           createVault();
@@ -117,13 +120,14 @@ function App() {
                       disabled={isSuccess || isPending}
                   >
                       {isSuccess || isPending ? <ClipLoader size={20} /> : "Create Vault"}
-                  </Button> */}
+                  </Button> }
 
                   <Button
                       size="3"
                       onClick={() => {
                           createChild();
                       }}
+                      disabled={rootdir=== '0'}
                   >
                       Create child
                   </Button>

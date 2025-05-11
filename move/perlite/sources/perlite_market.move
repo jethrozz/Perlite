@@ -30,11 +30,11 @@ module perlite::perlite_market {
     public struct ColumnCap has key, store{
         id: UID,
         created_at: u64,
+        column_id: ID,
     }
 
     public struct Column has key {
         id: UID,
-        cap: ID,
         update_method: ID,
         payment_method: ID,
         name: String,
@@ -165,11 +165,8 @@ module perlite::perlite_market {
         perlite_version::assert_valid_version(global_config);
         let now = clock.timestamp_ms();
         
-        let col_cap = ColumnCap{
-            id: object::new(ctx),
-            created_at: now,
-        };
-        let col_cap_id = object::id(&col_cap);
+
+
 
         let pay_method_id = object::id(&payment_method);
         let update_method_id = object::id(&update_method);
@@ -178,7 +175,6 @@ module perlite::perlite_market {
         transfer::share_object(update_method);
         let column = Column { 
             id: object::new(ctx),
-            cap: col_cap_id,
             update_method: update_method_id,
             payment_method: pay_method_id,
             name, 
@@ -192,9 +188,15 @@ module perlite::perlite_market {
             updated_at: now,
             subscriptions: table::new(ctx),
         };
+
+        let column_id = object::id(&column);
+        let col_cap = ColumnCap{
+            id: object::new(ctx),
+            created_at: now,
+            column_id,
+        };
         transfer::public_transfer(col_cap, ctx.sender());
         transfer::share_object(column);
-
     }
     //修改基本信息
     public fun edit_column_base_info(
@@ -205,7 +207,7 @@ module perlite::perlite_market {
         new_plan_installment_number: u64,
         clock: &Clock,
         ctx: &mut TxContext){
-            assert!(object::id(column_cap) == column.cap, E_NO_COLUMN_CAP);
+            assert!(object::id(column) == column_cap.column_id, E_NO_COLUMN_CAP);
             let old_name = column.name;
             let old_desc = column.desc;
             column.name = new_name;
@@ -223,7 +225,7 @@ module perlite::perlite_market {
         column: &mut Column,
         clock: &Clock,
         _ctx: &mut TxContext){
-            assert!(object::id(column_cap) == column.cap, E_NO_COLUMN_CAP);
+            assert!(object::id(column) == column_cap.column_id, E_NO_COLUMN_CAP);
             column.status = 1;
             column.updated_at = clock.timestamp_ms();
         //专栏发布事件
@@ -235,8 +237,7 @@ module perlite::perlite_market {
         column: &mut Column,
         clock: &Clock,
         _ctx: &mut TxContext){
-
-            assert!(object::id(column_cap) == column.cap, E_NO_COLUMN_CAP);
+            assert!(object::id(column) == column_cap.column_id, E_NO_COLUMN_CAP);
             column.status = 2;
             column.updated_at = clock.timestamp_ms();
             //专栏下架事件
@@ -252,7 +253,7 @@ module perlite::perlite_market {
         ctx: &mut TxContext){
                         //版本检查
             perlite_version::assert_valid_version(global_config); 
-            assert!(object::id(column_cap) == column.cap, E_NO_COLUMN_CAP);       
+            assert!(object::id(column) == column_cap.column_id, E_NO_COLUMN_CAP);   
             let col_id = object::id(column);
             let mut file_ids: vector<ID> = vector::empty();
             file_ids.push_back(object::id(file));
@@ -286,7 +287,7 @@ module perlite::perlite_market {
         installment: &mut Installment,
         clock: &Clock,
         _ctx: &mut TxContext){
-            assert!(object::id(column_cap) == column.cap, E_NO_COLUMN_CAP); 
+            assert!(object::id(column) == column_cap.column_id, E_NO_COLUMN_CAP);
             //let col_id = object::id(column);
             let installment_id = object::id(installment);
             let (exist, index) = column.all_installment.index_of(&installment_id);
@@ -399,10 +400,10 @@ module perlite::perlite_market {
 
     //专栏管理员提取余额
     public entry fun column_admin_withdraw(
-        _column_cap: &ColumnCap,
+        column_cap: &ColumnCap,
         column: &mut Column,
         ctx: &mut TxContext){
-            assert!(column.cap == object::id(_column_cap), E_NO_COLUMN_CAP);
+            assert!(object::id(column) == column_cap.column_id, E_NO_COLUMN_CAP);
             let balance = column.balance.withdraw_all();
             let coin  = coin::from_balance(balance, ctx);
             transfer::public_transfer(coin, ctx.sender());
@@ -449,7 +450,7 @@ module perlite::perlite_market {
         is_prefix(column.id.to_bytes(), id)
     }
 
-    entry fun seal_approve(id: vector<u8>, sub: &SubscriptionCap, column: &Column, payment_method: &PaymentMethod, clock: &Clock) {
+    entry fun seal_approve_sub(id: vector<u8>, sub: &SubscriptionCap, column: &Column, payment_method: &PaymentMethod, clock: &Clock, _ctx: &TxContext) {
         assert!(approve_internal(id, sub, column, payment_method, clock), ENoAccess);
     }
 }

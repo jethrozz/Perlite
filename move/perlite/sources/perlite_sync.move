@@ -18,7 +18,7 @@ module perlite::perlite_sync {
         title: String,
         belong_dir: ID,
         blob_id: String,
-        end_epoch: String,
+        end_epoch: u64,
         created_at: u64,
         updated_at: u64,
     }
@@ -36,7 +36,7 @@ module perlite::perlite_sync {
         }
     }
 
-    public fun new_file(title: String, blob_id: String, end_epoch: String, dir : &mut Directory,clock: &Clock, ctx: &mut TxContext): File {
+    public fun new_file(title: String, blob_id: String, end_epoch: u64, dir : &mut Directory,clock: &Clock, ctx: &mut TxContext): File {
         let now = clock.timestamp_ms();
         let  dir_id = object::id(dir);
         File {
@@ -50,11 +50,11 @@ module perlite::perlite_sync {
         }
     }
 
-    public entry fun transfer_file(file: File, recipient: address, ctx: &mut TxContext) {
+    public entry fun transfer_file(file: File, recipient: address, _ctx: &mut TxContext) {
         transfer::public_transfer(file, recipient);
     }
 
-    public entry fun transfer_dir(dir: Directory, recipient: address, ctx: &mut TxContext) {
+    public entry fun transfer_dir(dir: Directory, recipient: address, _ctx: &mut TxContext) {
         transfer::public_transfer(dir, recipient);
     }
 
@@ -78,35 +78,51 @@ module perlite::perlite_sync {
         dir.is_root = is_root;
     }
 
-    public fun update_file(title: String, blob_id: String, file: &mut File, clock: &Clock, ctx: &mut TxContext) {
+    public fun update_file(title: String, blob_id: String, file: &mut File, clock: &Clock, _ctx: &mut TxContext) {
         let now = clock.timestamp_ms();
         file.updated_at = now;
         file.title = title;
         file.blob_id = blob_id;
     }
-    public fun delete_file(file: &mut File, ctx: &mut TxContext) {
-        object::delete(file.id);
+    public fun delete_file(file: File, _ctx: &mut TxContext) {
+        let File{
+            id,
+            blob_id,
+            end_epoch,
+            belong_dir,
+            title,
+            created_at,
+            updated_at,
+        } = file;
+        object::delete(id);
     }
 
-    public fun delete_directory(dir: &mut Directory, ctx: &mut TxContext) {
-         let Ticket {
-         id,
-         expiration_time: _,
-     } = ticket;
-        object::delete(dir.id);
+    public fun delete_directory(dir: Directory, _ctx: &mut TxContext) {
+         let Directory {
+            id,
+            name,
+            parent,
+            is_root,
+            created_at,
+            updated_at,
+        } = dir;
+        object::delete(id);
     }
 
-    public fun move_file(file: &mut File, new_dir: &Directory, clock: &Clock, ctx: &mut TxContext) {
+    public fun move_file(file: &mut File, new_dir: &Directory, clock: &Clock, _ctx: &mut TxContext) {
         let now = clock.timestamp_ms();
         let id = object::id(new_dir);
         file.belong_dir = id;
         file.updated_at = now;
     }
 
-    public fun move_directory(dir: &mut Directory, new_parent_dir: &Directory, clock: &Clock, ctx: &mut TxContext) {
+    public fun move_directory(dir: &mut Directory, new_parent_dir: &Directory, clock: &Clock, _ctx: &mut TxContext) {
         let now = clock.timestamp_ms();
         let id = object::id(new_parent_dir);
         dir.parent = id;
         dir.updated_at = now;
+    }
+
+    entry fun seal_approve(id: vector<u8>, file: &File, ctx: &TxContext) {
     }
 }

@@ -1,5 +1,4 @@
 module perlite::perlite_version{
-    use sui::object::{Self, UID};
     use sui::vec_set::VecSet;
     
         // 权限
