@@ -1,4 +1,5 @@
 import React from "react";
+import "./index.css";
 import ReactDOM from "react-dom/client";
 import "@mysten/dapp-kit/dist/index.css";
 import "@radix-ui/themes/styles.css";
@@ -13,7 +14,6 @@ const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <Theme appearance="dark">
       <QueryClientProvider client={queryClient}>
         <SuiClientProvider networks={networkConfig} defaultNetwork="testnet">
           <WalletProvider autoConnect>
@@ -21,6 +21,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           </WalletProvider>
         </SuiClientProvider>
       </QueryClientProvider>
-    </Theme>
   </React.StrictMode>,
 );
