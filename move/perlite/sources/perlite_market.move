@@ -95,6 +95,8 @@ module perlite::perlite_market {
     const ENoAccess: u64 = 1007;
     const E_COLUMN_SUBSCRIPTION_NOT_EXIST: u64 = 1008;
     const E_NOT_OVER_TIME: u64 = 1009;
+    const E_NOT_PUBLISH: u64 = 1010;
+    const E_STATUS_ERROR: u64 = 1011;
 
     fun init(ctx: &mut TxContext) {
         //创建管理员权限
@@ -165,9 +167,6 @@ module perlite::perlite_market {
         perlite_version::assert_valid_version(global_config);
         let now = clock.timestamp_ms();
         
-
-
-
         let pay_method_id = object::id(&payment_method);
         let update_method_id = object::id(&update_method);
         
@@ -238,6 +237,8 @@ module perlite::perlite_market {
         clock: &Clock,
         _ctx: &mut TxContext){
             assert!(object::id(column) == column_cap.column_id, E_NO_COLUMN_CAP);
+            //有人订阅，不能下架
+            assert!(column.subscriptions.length() > 0, E_STATUS_ERROR);
             column.status = 2;
             column.updated_at = clock.timestamp_ms();
             //专栏下架事件
@@ -288,6 +289,8 @@ module perlite::perlite_market {
         clock: &Clock,
         _ctx: &mut TxContext){
             assert!(object::id(column) == column_cap.column_id, E_NO_COLUMN_CAP);
+            //已发布的专栏不能删除
+            assert!(column.status == 0, E_STATUS_ERROR);
             //let col_id = object::id(column);
             let installment_id = object::id(installment);
             let (exist, index) = column.all_installment.index_of(&installment_id);
@@ -295,7 +298,6 @@ module perlite::perlite_market {
                 abort 1006
             };
             column.all_installment.remove(index);
-                
             //删除installment
             //todo 
    
@@ -312,6 +314,8 @@ module perlite::perlite_market {
         ctx: &mut TxContext){
             //版本检查
             perlite_version::assert_valid_version(global_config); 
+            //检查是否发布
+            assert!(column.status == 1, E_NOT_PUBLISH);
             //检查支付方式是否匹配
             assert!(object::id(payment_method) == column.payment_method, E_NOT_COLUMN_PAY_NOT_MATCH);
             //检查支付金额是否足够
@@ -450,7 +454,13 @@ module perlite::perlite_market {
         is_prefix(column.id.to_bytes(), id)
     }
 
+    //订阅者权限校验
     entry fun seal_approve_sub(id: vector<u8>, sub: &SubscriptionCap, column: &Column, payment_method: &PaymentMethod, clock: &Clock, _ctx: &TxContext) {
         assert!(approve_internal(id, sub, column, payment_method, clock), ENoAccess);
+    }
+
+    //作者权限校验
+    entry fun seal_approve_creator(id: vector<u8>, col_cap: &ColumnCap, column: &Column, _ctx: &TxContext) {
+        assert!(col_cap.column_id == object::id(column), ENoAccess);
     }
 }

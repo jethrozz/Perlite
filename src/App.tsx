@@ -10,8 +10,6 @@ import { AuthProvider } from "@/contexts/auth-context";
 
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
-import Login from "@/pages/auth/login";
-import Register from "@/pages/auth/register";
 import SeriesDetails from "@/pages/series/[id]";
 import BrowseSeries from "@/pages/series/browse";
 import UserLibrary from "@/pages/user/library";
@@ -29,8 +27,6 @@ function Router() {
       <main className="flex-grow">
         <Switch>
           <Route path="/" component={Home} />
-          <Route path="/auth/login" component={Login} />
-          <Route path="/auth/register" component={Register} />
           <Route path="/series/:id" component={SeriesDetails} />
           <Route path="/series/browse" component={BrowseSeries} />
           <Route path="/user/library" component={UserLibrary} />

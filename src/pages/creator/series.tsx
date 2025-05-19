@@ -22,8 +22,8 @@ import { getInitials, timeAgo } from '@/lib/utils';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { insertSeriesSchema } from '@shared/schema';
-import type { Series, Category } from '@shared/schema';
+import { insertSeriesSchema } from '@/shared/schema';
+import type { Series, Category } from '@/shared/schema';
 import {
   Plus,
   Trash,

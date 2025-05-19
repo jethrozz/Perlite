@@ -1,35 +1,30 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Link, useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { SectionHeading } from '@/components/ui/section-heading';
 import { SeriesCard } from '@/components/series-card';
-import { CategoryCard } from '@/components/category-card';
-import { FeaturedCreator } from '@/components/featured-creator';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
-import type { Series, Category, User } from '@shared/schema';
+import { useCurrentAccount } from '@mysten/dapp-kit';
+
+import {
+  Series,
+  getTopN
+} from '@/shared/perlite-market';
 import { 
-  ArrowRight, 
-  ChevronRight, 
   Code,
-  ShieldAlert,
-  Glasses,
   Brain,
-  Cpu,
-  Coins,
-  Boxes,
   Workflow
 } from 'lucide-react';
 
 export default function Home() {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
-  const { user, isAuthenticated } = useAuth();
-
+  const currentAccount = useCurrentAccount();
+  //const { user, isAuthenticated } = useAuth();
+  const seriesArray = getTopN();
+  const loadingSeries = false;
   // Fetch top series
-  const { data: topSeries, isLoading: loadingSeries } = useQuery({
+/**   const { data: topSeries, isLoading: loadingSeries } = useQuery({
     queryKey: ['/api/series/top'],
     queryFn: async () => {
       const res = await fetch('/api/series/top?limit=4');
@@ -38,15 +33,6 @@ export default function Home() {
     }
   });
 
-  // Fetch categories
-  const { data: categories, isLoading: loadingCategories } = useQuery({
-    queryKey: ['/api/categories'],
-    queryFn: async () => {
-      const res = await fetch('/api/categories');
-      if (!res.ok) throw new Error('Failed to fetch categories');
-      return await res.json();
-    }
-  });
 
   // Fetch featured creator (Maya Richards, ID 5)
   const { data: featuredCreator, isLoading: loadingCreator } = useQuery({
@@ -61,33 +47,18 @@ export default function Home() {
         return null;
       }
     }
-  });
+  });*/
 
   // Fetch featured creator's series
-  const { data: creatorSeries, isLoading: loadingCreatorSeries } = useQuery({
-    queryKey: ['/api/users/5/series'],
-    queryFn: async () => {
-      try {
-        const res = await fetch('/api/users/5/series');
-        if (!res.ok) throw new Error('Failed to fetch creator series');
-        return await res.json();
-      } catch (error) {
-        console.error('Error fetching creator series:', error);
-        return null;
-      }
-    },
-    enabled: !!featuredCreator
-  });
 
   // Handle subscription button click
-  const handleSubscribe = (seriesId: number) => {
-    if (!isAuthenticated) {
+  const handleSubscribe = (seriesId: string) => {
+    if (!currentAccount) {
       toast({
-        title: "Authentication Required",
-        description: "Please sign in to subscribe to this series",
+        title: "Wallet Connect Required",
+        description: "Please connect your wallet",
         variant: "default"
       });
-      navigate('/auth/login');
       return;
     }
 
@@ -97,7 +68,8 @@ export default function Home() {
       variant: "default"
     });
 
-    // In a real app, redirect to payment page or handle the subscription process
+    // do something with the seriesId
+    console.log(`Subscribing to series: ${seriesId}`);
   };
 
   // Animation variants for elements
@@ -212,7 +184,7 @@ export default function Home() {
               </div>
             ))
           ) : (
-            topSeries?.map((series: Series) => (
+            seriesArray?.map((series: Series) => (
               <motion.div key={series.id} variants={itemVariants}>
                 <SeriesCard 
                   series={series} 
@@ -225,50 +197,7 @@ export default function Home() {
       </section>
       
       {/* Categories section removed as requested */}
-      
-      {/* Featured Creator Section */}
-      <section className="container mx-auto px-4 py-12">
-        {loadingCreator || loadingCreatorSeries ? (
-          <div className="cyberpunk-card p-10 animate-pulse">
-            <div className="max-w-md">
-              <div className="h-6 bg-card/50 rounded w-1/3 mb-4"></div>
-              <div className="h-12 bg-card/50 rounded w-3/4 mb-6"></div>
-              <div className="h-6 bg-card/50 rounded w-full mb-8"></div>
-              
-              <div className="flex gap-4 mb-8">
-                <div className="bg-card/60 px-4 py-3 rounded flex-1">
-                  <div className="h-8 bg-card/50 rounded w-full mb-2"></div>
-                  <div className="h-4 bg-card/50 rounded w-2/3"></div>
-                </div>
-                <div className="bg-card/60 px-4 py-3 rounded flex-1">
-                  <div className="h-8 bg-card/50 rounded w-full mb-2"></div>
-                  <div className="h-4 bg-card/50 rounded w-2/3"></div>
-                </div>
-              </div>
-              
-              <div className="h-10 bg-card/50 rounded w-40"></div>
-            </div>
-          </div>
-        ) : (
-          featuredCreator && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <FeaturedCreator 
-                creator={featuredCreator}
-                popularSeries={creatorSeries}
-                stats={{
-                  seriesCount: creatorSeries?.length || 0,
-                  totalSubscribers: creatorSeries?.reduce((sum: number, series: Series) => sum + series.subscriberCount, 0) || 0,
-                  averageRating: 4.9
-                }}
-              />
-            </motion.div>
-          )
-        )}
-      </section>
+
       
       {/* Creator Dashboard Preview */}
       <section className="container mx-auto px-4 py-12">

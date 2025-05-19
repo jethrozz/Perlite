@@ -10,7 +10,8 @@ import { CategoryCard } from '@/components/category-card';
 import { SectionHeading } from '@/components/ui/section-heading';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import type { Series, Category, User } from '@shared/schema';
+import type {Category, User } from '@shared/schema';
+import type { Series } from '@/shared/perlite-market';
 import { 
   Search, 
   Filter,

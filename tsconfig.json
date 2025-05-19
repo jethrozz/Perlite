@@ -27,7 +27,6 @@
     "types": ["node"],
     "paths": {
       "@/*": ["./src/*"],
-      "@/shared/*" : ["./src/shared/*"]
     }
   },
   "include": ["src"],

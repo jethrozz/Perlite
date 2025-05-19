@@ -3,6 +3,8 @@ import { Link, useLocation } from 'wouter';
 import { Logo } from '@/components/ui/logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ConnectButton } from "@mysten/dapp-kit";
+
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -158,12 +160,7 @@ export default function Navbar() {
                       </div>
                     ) : (
                       <div className="flex flex-col gap-2">
-                        <Button asChild variant="default" className="w-full cyberpunk-btn bg-primary hover:bg-secondary">
-                          <Link href="/auth/login">Sign In</Link>
-                        </Button>
-                        <Button asChild variant="outline" className="w-full cyberpunk-btn border-primary/50 text-primary">
-                          <Link href="/auth/register">Register</Link>
-                        </Button>
+                        <ConnectButton className="w-full cyberpunk-btn bg-primary hover:bg-secondary" />
                       </div>
                     )}
                   </div>
@@ -249,9 +246,7 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="hidden md:block">
-                <Button asChild variant="default" className="cyberpunk-btn bg-primary hover:bg-secondary text-white font-medium py-2 px-4 transition-all">
-                  <Link href="/auth/login">Sign In</Link>
-                </Button>
+                  <ConnectButton className="w-full cyberpunk-btn bg-primary hover:bg-secondary" />
               </div>
             )}
           </div>
