@@ -3,6 +3,27 @@ import { graphql } from "@mysten/sui/graphql/schemas/latest";
 import { DIR_TYPE, FILE_TYPE, GRAPHQL_URL } from "@/constants";
 import { PerliteVault, PerliteVaultDir, Directory, File } from "@shared/data";
 
+export const queryByAddress = graphql(`query GetObjectsByIDs($ids: [SuiAddress!]!) {
+  objects(
+    filter: {
+      objectIds: $ids
+    }
+  ) {
+                edges {
+                    node {
+                        asMoveObject {
+                            contents{
+                              type{
+                                repr
+                              }
+                              json
+                            }
+                        }
+                    }
+                }
+  }
+}`)
+
 export const queryByAddressAndType = graphql(`
     query ($address: SuiAddress!, $type: String!, $cursor: String) {
         address(address: $address) {
@@ -136,7 +157,6 @@ async function getUserOwnDirectory(
         return (
             data?.address?.objects?.edges.map((edge: any) => {
                 const json = edge.node.contents?.json;
-                console.log("json", json);
                 return {
                     id: json.id,
                     name: json.name,

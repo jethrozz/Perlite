@@ -9,6 +9,7 @@ module perlite::perlite_market {
     use sui::table::{Self, Table};
     use sui::balance::{Self,Balance};
     use std::string::{Self};
+    use std::string::append;
     //彩票的一次性见证者
     public struct PERLITE_MARKET has drop {}
     // 权限
@@ -239,16 +240,13 @@ module perlite::perlite_market {
 
         let column_id = object::id(&column);
 
-        let mut link: String = b"".to_string();
-        link.append(b"https://perlite.walrus.site/column/".to_string());
-        link.append(string::utf8(column_id.to_bytes()));
         let col_cap = ColumnCap{
             id: object::new(ctx),
             created_at: now,
             column_id,
             name,
             description: desc,
-            link: link,
+            link: b"https://perlite.walrus.site".to_string(),
             image_url: cover_img_url,
             project_url: b"".to_string(),
             creator: ctx.sender().to_string(),

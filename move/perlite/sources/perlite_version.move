@@ -41,7 +41,7 @@ module perlite::perlite_version{
     }
 
     public(package) fun assert_valid_version(config: &GlobalConfig) {
-        if (!config.version.contains(&PACKAGE_VERSION)) {
+        if (!config.version.contains(&get_version())) {
             not_support_version();
         }
     }

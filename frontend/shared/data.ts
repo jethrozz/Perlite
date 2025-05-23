@@ -48,14 +48,15 @@ export type ColumnCap = {
 };
 export type ColumnOtherInfo = {
   id: string;
-  update_method: UpdateMethod;
-  payment_method: PaymentMethod;
+  update_method: UpdateMethod|null;
+  payment_method: PaymentMethod|null;
   plan_installment_number: number; //计划期数
   all_installment: Array<Installment>;
   balance: number;
   is_rated: boolean;
   status: number;
   subscriptions: number; //订阅者数量
+  update_at: Date;
 };
 export type UpdateMethod = {
   id: string;
@@ -66,7 +67,7 @@ export type UpdateMethod = {
 export type PaymentMethod = {
   id: string;
   pay_type: number; //0买断，1质押, 2订阅
-  coin_type: String;
+  coin_type: string;
   decimals: number;
   fee: number; //目前只支持sui,精度9位
   subscription_time: number; //订阅时长，用于支持质押模式和订阅模式，单位天
@@ -76,7 +77,7 @@ export type Installment = {
   id: string;
   belong_column: string;
   no: number;
-  files: Array<File>;
+  files: Array<string>;
 };
 
 export type Subscription= {

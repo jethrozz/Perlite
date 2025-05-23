@@ -174,7 +174,7 @@ export default function Home() {
                 system that lets you focus on creating high-quality content.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Link href={isAuthenticated ? "/profile" : "/register"}>
+                <Link href={"/creator/dashboard"}>
                   <Button className="cyber-btn bg-cyber-purple hover:bg-opacity-80 text-white font-rajdhani py-2 px-6 rounded text-lg">
                     Start Now
                   </Button>

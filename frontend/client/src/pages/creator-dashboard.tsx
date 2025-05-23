@@ -28,17 +28,23 @@ import {
   Users,
   Plus,
   Edit,
+  Newspaper,
   Calendar,
   Eye,
   ChevronRight,
   X,
+  Trash2,
+  DollarSign,
 } from "lucide-react";
 import {
   useCurrentAccount,
   useSignAndExecuteTransaction,
   useSuiClient,
 } from "@mysten/dapp-kit";
+import { Transaction } from "@mysten/sui/transactions";
 import { useNetworkVariable } from "@/networkConfig";
+import { getUserOwnedColumns } from "@/contract/perlite_column";
+import { ColumnCap } from "@shared/data";
 interface ColumnCardProps {
   id: string;
   title: string;
@@ -56,16 +62,30 @@ interface ColumnCardProps {
 }
 
 export default function CreatorDashboard() {
+  const chain = useNetworkVariable("chain");
   const packageId = useNetworkVariable("packageId");
   const globalConfigId = useNetworkVariable("globalConfigId");
   const marketConfigId = useNetworkVariable("marketConfigId");
   const currentAccount = useCurrentAccount();
-  const suiClient = useSuiClient();
+  const [columns, setColumns] = useState<ColumnCap[]>([]);
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [columns, setColumns] = useState<Column[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  // Mock data for demonstration - replace with real API calls
+  useEffect(() => {
+    const fetchColumns = async () => {
+      if (currentAccount) {
+        let userOwnedColumns = await getUserOwnedColumns(
+          currentAccount.address,
+        );
+        console.log("userOwnedColumns", userOwnedColumns);
+        setColumns(userOwnedColumns);
+        setIsLoading(false);
+      }
+    };
+    fetchColumns();
+  }, [currentAccount, setColumns, setIsLoading]);
 
   // 专栏创建表单状态
   const [formData, setFormData] = useState({
@@ -76,10 +96,10 @@ export default function CreatorDashboard() {
     enableRating: false,
     paymentType: "0", // 0: 买断, 1: 订阅
     price: "",
-    subscriptionDays: "",
+    subscriptionDays: "0",
     startDate: "",
-    intervalDays: "",
-    updateEpisodes: "",
+    intervalDays: "7",
+    updateEpisodes: "1",
   });
 
   // 处理表单输入变化
@@ -100,10 +120,10 @@ export default function CreatorDashboard() {
       enableRating: false,
       paymentType: "0",
       price: "",
-      subscriptionDays: "",
+      subscriptionDays: "0",
       startDate: "",
-      intervalDays: "",
-      updateEpisodes: "",
+      intervalDays: "7",
+      updateEpisodes: "1",
     });
   };
   // 验证必填字段
@@ -133,7 +153,7 @@ export default function CreatorDashboard() {
       });
       checkFailed = true;
     }
-    if (formData.paymentType === "1" && !formData.subscriptionDays) {
+    if (formData.paymentType === "1" && parseInt(formData.subscriptionDays) > 0 ) {
       toast({
         title: "Error",
         description: "Subscription days is required for subscription type",
@@ -177,7 +197,9 @@ export default function CreatorDashboard() {
       });
       return;
     }
+    console.log("formData", formData);
     // 验证必填字段
+
     let checkFailed = checkRequiredFields();
     if (checkFailed) {
       return;
@@ -185,114 +207,73 @@ export default function CreatorDashboard() {
     const tx = new Transaction();
     tx.setSender(currentAccount.address);
     //create_payment_method
-    tx.moveCall({
+    let payment = tx.moveCall({
       target: `${packageId}::perlite_market::create_payment_method`,
       arguments: [
-        tx.pure,
-        tx.object(lotteryPoolId),
-        tx.object(ticketPoolId),
-        suiCoin,
-        tx.object(storageId),
-        tx.object(incentiveV3Id),
-        tx.object(incentiveV2Id),
-        tx.object(poolSuiId),
-        tx.object(clockId),
-        tx.object(randomId),
-      ],
-      typeArguments: [balance.coinType],
+        tx.pure.u8(parseInt(formData.paymentType)),
+        tx.pure.string("0000000000000000000000000000000000000000000000000000000000000002::sui::SUI"),
+        tx.pure.u64(9),
+        tx.pure.u64(parseInt(formData.price)*1000000000),
+        tx.pure.u64(parseInt(formData.subscriptionDays)),
+        tx.object(marketConfigId),
+        tx.object(globalConfigId)
+      ]
     });
+    //formData.startDate
+    let since = new Date(formData.startDate).getTime()
     //create_update_method
-
+    let updateMethod = tx.moveCall({
+      target: `${packageId}::perlite_market::create_update_method`,
+      arguments: [
+        tx.pure.u64(since),
+        tx.pure.u64(formData.intervalDays),
+        tx.pure.u64(formData.updateEpisodes),
+        tx.object(globalConfigId)
+      ]
+    })
     //create_column
+
+    tx.moveCall({
+      target: `${packageId}::perlite_market::create_column`,
+      arguments: [
+        tx.pure.string(formData.title),
+        tx.pure.string(formData.description),
+        tx.pure.string(formData.coverImageUrl),
+        tx.object(updateMethod),
+        tx.object(payment),
+        tx.pure.bool(formData.enableRating),
+        tx.pure.u64(formData.plannedEpisodes),
+        tx.object("0x6"),
+        tx.object(globalConfigId)
+      ]
+    });
+
     try {
       // 这里应该调用实际的API来创建专栏
-      toast({
-        title: "Success",
-        description: "Column created successfully!",
-      });
-
-      setShowCreateModal(false);
+      signAndExecuteTransaction(
+        { transaction: tx, chain: chain },
+        {
+            onSuccess: (result) => {
+                // 成功时打印结果
+                alert("Transaction successful: " + JSON.stringify(result));
+                setShowCreateModal(false);
+            },
+            onError: (error) => {
+               alert("Transaction successful: " + JSON.stringify(error));
+                console.error("Transaction failed:", error);
+            },
+        },
+      );
+      
       resetForm();
-
       // 刷新专栏列表
       // 实际项目中应该重新获取数据
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to create column. Please try again.",
-        variant: "destructive",
-      });
+      alert("Failed to create column. Please try again.");
+      console.error("Failed to create column:", error);
     }
   };
 
-  // Mock data for demonstration - replace with real API calls
-  useEffect(() => {
-    if (currentAccount) {
-      // Simulate loading
-      setTimeout(() => {
-        const mockColumns: Column[] = [
-          {
-            id: 1,
-            title: "Blockchain Development Guide",
-            description:
-              "Complete guide to building decentralized applications with practical examples and best practices",
-            thumbnailUrl: null,
-            articleCount: 15,
-            subscriberCount: 234,
-            isPublished: true,
-            isHot: true,
-            isNew: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-          {
-            id: 2,
-            title: "Web3 Security Best Practices",
-            description:
-              "Essential security patterns for Web3 development, including smart contract auditing and vulnerability prevention",
-            thumbnailUrl: null,
-            articleCount: 8,
-            subscriberCount: 156,
-            isPublished: true,
-            isHot: false,
-            isNew: true,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-          {
-            id: 3,
-            title: "DeFi Protocols Deep Dive",
-            description:
-              "Understanding decentralized finance protocols, yield farming, and liquidity mining strategies",
-            thumbnailUrl: null,
-            articleCount: 12,
-            subscriberCount: 89,
-            isPublished: false,
-            isHot: false,
-            isNew: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-          {
-            id: 4,
-            title: "NFT Development Workshop",
-            description:
-              "Step-by-step guide to creating, deploying, and marketing NFT collections on various blockchains",
-            thumbnailUrl: null,
-            articleCount: 6,
-            subscriberCount: 45,
-            isPublished: true,
-            isHot: false,
-            isNew: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-        ];
-        setColumns(mockColumns);
-        setIsLoading(false);
-      }, 1000);
-    }
-  }, [currentAccount]);
 
   if (!currentAccount) {
     return (
@@ -614,85 +595,144 @@ export default function CreatorDashboard() {
               </Button>
             </div>
           ) : (
-            <div className="divide-y divide-cyber-dark/50">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
               {columns.map((column) => (
                 <div
                   key={column.id}
-                  className="p-6 hover:bg-cyber-dark/20 transition-all group cursor-pointer border-l-4 border-transparent hover:border-cyber-purple"
+                  className="cyber-border bg-cyber-surface rounded-lg overflow-hidden hover:border-cyber-purple transition-colors group"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 pr-6">
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className="font-rajdhani text-xl text-cyber-text group-hover:text-cyber-cyan transition-colors font-semibold">
-                          {column.title}
-                        </h3>
-                        <div className="flex gap-2">
-                          {column.isHot && (
-                            <span className="px-3 py-1 text-xs rounded-full font-rajdhani bg-cyber-purple text-white font-bold">
-                              🔥 HOT
-                            </span>
-                          )}
-                          {column.isNew && (
-                            <span className="px-3 py-1 text-xs rounded-full font-rajdhani bg-cyber-cyan text-black font-bold">
-                              ✨ NEW
-                            </span>
-                          )}
-                          <span
-                            className={`px-3 py-1 text-xs rounded-full font-rajdhani font-bold ${
-                              column.isPublished
-                                ? "bg-green-500 text-white"
-                                : "bg-gray-600 text-white"
-                            }`}
-                          >
-                            {column.isPublished ? "📢 PUBLISHED" : "📝 DRAFT"}
-                          </span>
+                  {/* 封面图片 */}
+                  <div className="h-48 bg-gradient-to-br from-cyber-dark to-cyber-purple/20 relative overflow-hidden">
+                    {column.image_url ? (
+                      <img
+                        src={column.image_url}
+                        alt={column.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="w-16 h-16 bg-cyber-purple/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <BookOpen className="h-8 w-8 text-cyber-purple" />
+                          </div>
+                          <div className="text-cyber-text/60 text-sm">
+                            No Cover
+                          </div>
                         </div>
                       </div>
+                    )}
 
-                      <p className="text-cyber-text opacity-80 mb-4 text-base leading-relaxed">
-                        {column.description}
-                      </p>
-
-                      <div className="flex items-center gap-8 text-sm text-cyber-text opacity-70">
-                        <div className="flex items-center gap-2">
-                          <BookOpen className="w-4 h-4 text-cyber-cyan" />
-                          <span className="font-medium">
-                            {column.articleCount} articles
-                          </span>
+                    {/* 价格标签 */}
+                    <div className="absolute top-3 right-3">
+                      <div className="bg-cyber-dark/90 border border-cyber-purple rounded-lg px-3 py-1">
+                        <div className="text-cyber-purple text-sm font-medium">
+                          {column.other.payment_method?.fee || 0} SUI
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Users className="w-4 h-4 text-cyber-purple" />
-                          <span className="font-medium">
-                            {column.subscriberCount} subscribers
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-green-400" />
-                          <span className="font-medium">
-                            Updated {formatDate(column.updatedAt)}
-                          </span>
+                        <div className="text-cyber-text/60 text-xs">
+                          {column.other.payment_method?.pay_type === 0
+                            ? "Buy Out"
+                            : "Subscription"}
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-cyber-purple text-cyber-purple hover:bg-cyber-purple hover:text-white transition-all"
+                    {/* 状态标签 */}
+                    <div className="absolute top-3 left-3 flex flex-col gap-1">
+                      {column.other.status === 1 && (
+                        <span className="px-2 py-1 text-xs rounded-full font-rajdhani bg-cyber-purple text-white font-bold">
+                          🔥 HOT
+                        </span>
+                      )}
+                      {column.other.status === 0 && (
+                        <span className="px-2 py-1 text-xs rounded-full font-rajdhani bg-cyber-cyan text-black font-bold">
+                          ✨ NEW
+                        </span>
+                      )}
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full font-rajdhani font-bold ${
+                          column.isPublished
+                            ? "bg-green-500 text-white"
+                            : "bg-gray-600 text-white"
+                        }`}
                       >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit
-                      </Button>
+                        {column.other.status === 1 ? "📢 LIVE" : "📝 DRAFT"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="font-rajdhani text-xl text-cyber-text group-hover:text-cyber-cyan transition-colors font-semibold">
+                        {column.name}
+                      </h3>
+                      <div className="flex space-x-2">
                       <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-cyber-cyan text-cyber-cyan hover:bg-cyber-cyan hover:text-black transition-all"
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        View
-                      </Button>
-                      <ChevronRight className="w-6 h-6 text-cyber-text opacity-40 group-hover:opacity-100 group-hover:text-cyber-purple transition-all" />
+                          variant="ghost"
+                          size="sm"
+                          className="text-cyber-purple hover:bg-cyber-dark"
+                        >
+                          <Newspaper className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-cyber-purple hover:bg-cyber-dark"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-400 hover:bg-red-400/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <p className="text-cyber-text/80 text-sm mb-4 line-clamp-3">
+                      {column.description}
+                    </p>
+
+                    {/* 收益信息 */}
+                    <div className="bg-cyber-dark/50 rounded-lg p-3 mb-4">
+                      <div className="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                          <div className="text-cyber-purple text-lg font-bold">
+                            {column.other.balance || 0}
+                          </div>
+                          <div className="text-cyber-text/60 text-xs">
+                            Total Earnings
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-cyber-cyan text-lg font-bold">
+                            {column.other.balance || 0}
+                          </div>
+                          <div className="text-cyber-text/60 text-xs">
+                            Available
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 提取奖励按钮 */}
+                    <Button
+                      className="w-full mb-4 bg-gradient-to-r from-cyber-purple to-cyber-cyan hover:from-cyber-purple/80 hover:to-cyber-cyan/80 text-white"
+                      disabled={(column.other.balance || 0) === 0}
+                    >
+                      <DollarSign className="mr-2 h-4 w-4" />
+                      Withdraw Rewards ({column.other.balance/1000_000_000 || 0} SUI)
+                    </Button>
+
+                    <div className="flex justify-between items-center">
+                      <div className="text-cyber-text/60 text-xs">
+                        {column.other.subscriptions} subscribers •{" "}
+                        {column.other.all_installment.length} installments
+                      </div>
+                      <div className="text-cyber-purple text-sm font-medium">
+                        Updated {formatDate(column.other.update_at)}
+                      </div>
                     </div>
                   </div>
                 </div>
