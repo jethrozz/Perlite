@@ -1,0 +1,54 @@
+/* 钱包连接按钮样式 */
+.wallet-wrapper :global(.sui-connectbutton) {
+  background-color: #8a2be2 !important;
+  border: 2px solid #9333EA !important;
+  color: white !important;
+  border-radius: 0.375rem !important;
+  font-family: 'Rajdhani', sans-serif !important;
+  padding: 0.375rem 1rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  box-shadow: 0 0 10px rgba(138, 43, 226, 0.5) !important;
+  transition: all 0.2s ease !important;
+  animation: pulse 2s infinite;
+}
+
+.wallet-wrapper :global(.sui-connectbutton:hover) {
+  background-color: rgba(138, 43, 226, 0.8) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 0 15px rgba(138, 43, 226, 0.6) !important;
+}
+
+.wallet-wrapper :global(.sui-connectbutton:disabled) {
+  opacity: 0.7 !important;
+  cursor: not-allowed !important;
+}
+
+/* 连接状态样式 */
+.wallet-wrapper :global(.sui-walletconnected) {
+  background-color: rgba(138, 43, 226, 0.9) !important;
+  box-shadow: 0 0 10px rgba(138, 43, 226, 0.7) !important;
+}
+
+.wallet-wrapper :global(.sui-walletconnected:hover) {
+  background-color: rgba(138, 43, 226, 0.8) !important;
+}
+
+/* 弹窗样式 */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+/* 脉冲动画 */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(138, 43, 226, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(138, 43, 226, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(138, 43, 226, 0);
+  }
+}

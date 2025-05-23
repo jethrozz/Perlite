@@ -1,6 +1,6 @@
 module perlite::perlite_market {
     use sui::sui::SUI;
-    use sui::{clock::Clock, coin::{Self, Coin}};
+    use sui::{package, display, clock::Clock, coin::{Self, Coin}};
     use perlite::perlite_version::{Self, GlobalConfig};
     use perlite::perlite_util::{ is_prefix};
     use perlite::perlite_event::{Self};
@@ -8,8 +8,9 @@ module perlite::perlite_market {
     use perlite::{perlite_sync::{File}};
     use sui::table::{Self, Table};
     use sui::balance::{Self,Balance};
-    
-
+    use std::string::{Self};
+    //彩票的一次性见证者
+    public struct PERLITE_MARKET has drop {}
     // 权限
     public struct PerliteAdminCap has key, store {
         id: UID
@@ -31,6 +32,12 @@ module perlite::perlite_market {
         id: UID,
         created_at: u64,
         column_id: ID,
+        name: String,
+        description: String,
+        link: String,
+        image_url: String,
+        project_url: String,
+        creator: String,
     }
 
     public struct Column has key {
@@ -39,6 +46,7 @@ module perlite::perlite_market {
         payment_method: ID,
         name: String,
         desc: String,
+        cover_img_url: String,
         all_installment: vector<ID>, //所有期
         balance: Balance<SUI>, //余额
         is_rated: bool,
@@ -47,6 +55,7 @@ module perlite::perlite_market {
         updated_at: u64,
         plan_installment_number: u64, //计划期数
         subscriptions: Table<ID, u8>, //所有订阅者对象
+        creator: address,
     }
 
     public struct Installment has key {
@@ -98,7 +107,7 @@ module perlite::perlite_market {
     const E_NOT_PUBLISH: u64 = 1010;
     const E_STATUS_ERROR: u64 = 1011;
 
-    fun init(ctx: &mut TxContext) {
+    fun init(otw: PERLITE_MARKET, ctx: &mut TxContext) {
         //创建管理员权限
         let admin = PerliteAdminCap { id: object::new(ctx) };
         transfer::public_transfer(admin, ctx.sender());
@@ -111,6 +120,43 @@ module perlite::perlite_market {
         market_config.support_pay_type.push_back(2);
         transfer::share_object(market_config);
 
+        //创建nft
+            let keys = vector[
+                b"name".to_string(),
+                b"link".to_string(),
+                b"image_url".to_string(),
+                b"description".to_string(),
+                b"project_url".to_string(),
+                b"creator".to_string(),
+            ];
+
+            let values = vector[
+                // For `name` one can use the `Hero.name` property
+                b"{name}".to_string(),
+                // For `link` one can build a URL using an `id` property
+                b"{link}".to_string(),
+                // For `image_url` use an IPFS template + `image_url` property.
+                b"{image_url}".to_string(),
+                // Description is static for all `Hero` objects.
+                b"{description}".to_string(),
+                // Project URL is usually static
+                b"https://perlite.walrus.site".to_string(),
+                // Creator field can be any
+                b"{creator}".to_string(),
+            ];
+
+            // Claim the `Publisher` for the package!
+            let publisher = package::claim(otw, ctx);
+
+            // Get a new `Display` object for the `Ticket` type.
+            let mut display = display::new_with_fields<ColumnCap>(
+                &publisher, keys, values, ctx
+            );
+
+            // Commit first version of `Display` to apply changes.
+            display.update_version();
+            transfer::public_transfer(publisher, ctx.sender());
+            transfer::public_transfer(display, ctx.sender());
         //千分之1.5%
         let market = Market { id: object::new(ctx), cut: 15, balance: balance::zero()};
         transfer::share_object(market);
@@ -155,6 +201,7 @@ module perlite::perlite_market {
     public entry fun create_column(
         name: String,
         desc: String,
+        cover_img_url: String,
         update_method: UpdateMethod,
         payment_method: PaymentMethod,
         is_rated: bool,
@@ -178,6 +225,7 @@ module perlite::perlite_market {
             payment_method: pay_method_id,
             name, 
             desc, 
+            cover_img_url,
             all_installment: vector::empty(),
             balance: balance::zero(),
             is_rated,
@@ -186,14 +234,26 @@ module perlite::perlite_market {
             created_at: now,
             updated_at: now,
             subscriptions: table::new(ctx),
+            creator: ctx.sender(),
         };
 
         let column_id = object::id(&column);
+
+        let mut link: String = b"".to_string();
+        link.append(b"https://perlite.walrus.site/column/".to_string());
+        link.append(string::utf8(column_id.to_bytes()));
         let col_cap = ColumnCap{
             id: object::new(ctx),
             created_at: now,
             column_id,
+            name,
+            description: desc,
+            link: link,
+            image_url: cover_img_url,
+            project_url: b"".to_string(),
+            creator: ctx.sender().to_string(),
         };
+
         transfer::public_transfer(col_cap, ctx.sender());
         transfer::share_object(column);
     }

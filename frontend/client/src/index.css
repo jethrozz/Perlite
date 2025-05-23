@@ -1,0 +1,440 @@
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Barlow:wght@300;400;500;600&family=Share+Tech+Mono&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 240 10% 7%;
+  --foreground: 0 0% 98%;
+  --card: 240 10% 10%;
+  --card-foreground: 0 0% 98%;
+  --popover: 240 10% 10%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 272 90% 54%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 260 60% 50%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 240 5% 20%;
+  --muted-foreground: 240 5% 65%;
+  --accent: 275 80% 60%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 100% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 240 10% 20%;
+  --input: 240 10% 20%;
+  --ring: 272 90% 54%;
+  --radius: 0.5rem;
+
+  /* Cyberpunk colors */
+  --cyber-purple: 272 90% 54%;
+  --cyber-magenta: 300 100% 50%;
+  --cyber-cyan: 180 100% 50%;
+  --cyber-dark: 240 10% 7%;
+  --cyber-surface: 240 10% 12%;
+  --cyber-text: 0 0% 88%;
+  --cyber-glow: 280 95% 62%;
+
+  /* Chart colors */
+  --chart-1: 272 90% 54%;
+  --chart-2: 300 100% 50%;
+  --chart-3: 180 100% 50%;
+  --chart-4: 320 100% 65%;
+  --chart-5: 240 100% 65%;
+
+  /* Sidebar colors */
+  --sidebar-background: 240 10% 10%;
+  --sidebar-foreground: 0 0% 90%;
+  --sidebar-primary: 272 90% 54%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 275 80% 60%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 240 10% 20%;
+  --sidebar-ring: 272 90% 54%;
+}
+
+body {
+  font-family: 'Barlow', sans-serif;
+  @apply bg-background text-foreground;
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%238A2BE2' stroke-width='2'%3E%3Cpath d='M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z'/%3E%3Cpath d='M13 13l6 6'/%3E%3C/svg%3E"), auto;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.font-mono {
+  font-family: 'Share Tech Mono', monospace;
+}
+
+.font-rajdhani {
+  font-family: 'Rajdhani', sans-serif;
+}
+
+.font-barlow {
+  font-family: 'Barlow', sans-serif;
+}
+
+/* Cyberpunk styles */
+.cyber-border {
+  position: relative;
+  border: 1px solid hsl(var(--cyber-purple));
+  overflow: hidden;
+}
+
+.cyber-border::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, hsl(var(--cyber-glow)), transparent);
+  animation: glowHorizontal 2s infinite;
+}
+
+.cyber-border::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, hsl(var(--cyber-glow)), transparent);
+  animation: glowHorizontal 2s infinite reverse;
+}
+
+@keyframes glowHorizontal {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.cyber-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.cyber-btn:hover {
+  box-shadow: 0 0 10px hsl(var(--cyber-purple)), 0 0 20px hsl(var(--cyber-purple));
+}
+
+.cyber-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(138, 43, 226, 0.2), transparent);
+  transition: 0.5s;
+}
+
+.cyber-btn:hover::before {
+  left: 100%;
+}
+
+.glassmorphism {
+  background: rgba(30, 30, 30, 0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(138, 43, 226, 0.3);
+}
+
+.menu-item {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.menu-item::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: hsl(var(--cyber-glow));
+  transition: width 0.3s ease;
+}
+
+.menu-item:hover::after {
+  width: 100%;
+}
+
+.menu-item.active::after {
+  width: 100%;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--cyber-surface));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--cyber-purple));
+  border-radius: 3px;
+}
+
+/* Background grid pattern */
+.bg-grid {
+  position: relative;
+}
+
+.bg-grid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect x="0" y="0" width="100" height="100" fill="none" stroke="%238A2BE2" stroke-width="0.5" stroke-dasharray="5,5" /></svg>');
+  opacity: 0.1;
+  z-index: -1;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Dialog styles for wallet connection */
+.wallet-modal {
+  z-index: 9999;
+  position: fixed;
+  background-color: rgba(15, 15, 25, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid hsl(272, 90%, 54%);
+  border-radius: 8px;
+  color: white;
+  animation: fadeIn 0.2s ease-out;
+  box-shadow: 0 0 20px rgba(138, 43, 226, 0.6);
+}
+
+.wallet-modal * {
+  color: white;
+}
+
+.wallet-modal button {
+  background-color: hsl(272, 90%, 54%);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.wallet-modal button:hover {
+  background-color: hsl(272, 90%, 60%);
+  transform: translateY(-2px);
+  box-shadow: 0 0 10px rgba(138, 43, 226, 0.4);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer components {
+  .cyberpunk-divider {
+    @apply h-px bg-gradient-to-r from-transparent via-primary to-transparent relative;
+  }
+
+  .cyberpunk-divider::before {
+    content: '';
+    @apply absolute w-2.5 h-2.5 bg-primary top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rotate-45;
+  }
+
+  .cyber-input {
+    @apply bg-cyber-surface border border-cyber-purple text-cyber-text focus:outline-none focus:ring-1 focus:ring-cyber-glow rounded py-1.5 px-3;
+  }
+
+  .cyber-card {
+    @apply cyber-border bg-cyber-surface rounded-lg overflow-hidden transition-all duration-300;
+  }
+  
+  .cyber-card:hover {
+    box-shadow: 0 0 15px rgba(138, 43, 226, 0.5);
+    transform: translateY(-0.25rem);
+  }
+
+  .cyber-heading {
+    @apply font-rajdhani font-bold text-2xl text-cyber-text;
+  }
+
+  .cyber-badge {
+    @apply px-2 py-0.5 text-xs rounded font-rajdhani;
+  }
+
+  .cyber-badge-hot {
+    @apply bg-cyber-purple text-white;
+  }
+
+  .cyber-badge-new {
+    @apply bg-cyber-magenta text-white;
+  }
+
+  .shadow-neon {
+    box-shadow: 0 0 10px rgba(138, 43, 226, 0.7), 0 0 20px rgba(138, 43, 226, 0.4);
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-pulse-subtle {
+    animation: pulse 5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse {
+
+    0%,
+    100% {
+      opacity: 1;
+      box-shadow: 0 0 12px rgba(138, 43, 226, 0.8), 0 0 22px rgba(138, 43, 226, 0.5);
+    }
+
+    50% {
+      opacity: 0.85;
+      box-shadow: 0 0 8px rgba(138, 43, 226, 0.5), 0 0 16px rgba(138, 43, 226, 0.3);
+    }
+  }
+
+  /* File Tree Cyberpunk Styles */
+  .file-tree-item {
+    position: relative;
+  }
+
+  .file-tree-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, transparent, var(--cyber-purple), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .file-tree-item:hover::before {
+    opacity: 1;
+  }
+
+  /* Glowing file icons */
+  .file-icon-glow {
+    filter: drop-shadow(0 0 4px rgba(138, 43, 226, 0.6));
+  }
+
+  .folder-icon-glow {
+    filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.6));
+  }
+
+  /* File tree hover effects */
+  .tree-item-hover {
+    background: linear-gradient(90deg, transparent, rgba(138, 43, 226, 0.1), transparent);
+    border-left: 2px solid transparent;
+    transition: all 0.2s ease;
+  }
+
+  .tree-item-hover:hover {
+    border-left-color: var(--cyber-purple);
+    background: linear-gradient(90deg, rgba(138, 43, 226, 0.05), rgba(138, 43, 226, 0.15), rgba(138, 43, 226, 0.05));
+  }
+
+  /* Custom scrollbar for file tree */
+  .cyber-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .cyber-scrollbar::-webkit-scrollbar-track {
+    background: var(--cyber-dark);
+    border-radius: 4px;
+  }
+
+  .cyber-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #8A2BE2, #4B0082);
+    border-radius: 4px;
+    border: 1px solid var(--cyber-purple);
+  }
+
+  .cyber-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #9932CC, #6A0DAD);
+  }
+
+  /* Modal Dialog Styles - Stronger selectors */
+  [data-radix-dialog-overlay] {
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(4px) !important;
+    z-index: 50 !important;
+  }
+
+  [data-radix-dialog-content] {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 51 !important;
+    width: 90vw !important;
+    max-width: 42rem !important;
+    max-height: 85vh !important;
+    overflow-y: auto !important;
+    background: var(--cyber-surface) !important;
+    border: 1px solid var(--cyber-purple) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 0 30px rgba(138, 43, 226, 0.5) !important;
+    padding: 1.5rem !important;
+  }
+
+  /* Select Dropdown Styles */
+  [data-radix-select-content] {
+    background: var(--cyber-surface) !important;
+    border: 1px solid var(--cyber-purple) !important;
+    border-radius: 6px !important;
+    z-index: 10000 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  [data-radix-select-item] {
+    color: var(--cyber-text) !important;
+    padding: 8px 12px !important;
+    cursor: pointer !important;
+  }
+
+  [data-radix-select-item]:hover {
+    background: var(--cyber-dark) !important;
+    color: var(--cyber-purple) !important;
+  }
+
+  [data-radix-select-item][data-highlighted] {
+    background: var(--cyber-dark) !important;
+    color: var(--cyber-purple) !important;
+  }
+}

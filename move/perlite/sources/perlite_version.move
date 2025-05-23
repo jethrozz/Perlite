@@ -1,5 +1,5 @@
 module perlite::perlite_version{
-    use sui::vec_set::VecSet;
+    use sui::vec_set::{Self, VecSet};
     
         // 权限
     public struct PerliteVersionAdminCap has key, store {
@@ -16,6 +16,12 @@ module perlite::perlite_version{
     fun init(ctx: &mut TxContext) {
         //创建管理员权限
         let admin = PerliteVersionAdminCap { id: object::new(ctx) };
+        
+        let global = GlobalConfig {
+            id: object::new(ctx),
+            version: vec_set::empty(),
+        };
+        transfer::share_object(global);
         transfer::public_transfer(admin, ctx.sender());
     }
 
