@@ -10,6 +10,9 @@ module perlite::perlite_market {
     use sui::balance::{Self,Balance};
     use std::string::{Self};
     use std::string::append;
+    use sui::coin::split;
+    use sui::coin::destroy_zero;
+    use sui::sui;
     //彩票的一次性见证者
     public struct PERLITE_MARKET has drop {}
     // 权限
@@ -107,7 +110,7 @@ module perlite::perlite_market {
     const E_NOT_OVER_TIME: u64 = 1009;
     const E_NOT_PUBLISH: u64 = 1010;
     const E_STATUS_ERROR: u64 = 1011;
-
+    const E_CUT_FEE_NOT_ENOUGH: u64 = 1012;
     fun init(otw: PERLITE_MARKET, ctx: &mut TxContext) {
         //创建管理员权限
         let admin = PerliteAdminCap { id: object::new(ctx) };
@@ -366,7 +369,8 @@ module perlite::perlite_market {
         market: &mut Market,
         column: &mut Column,
         payment_method: &PaymentMethod,
-        fee: &mut Coin<SUI>, //支付费用
+        fee: Coin<SUI>, //支付费用
+        cut_fee: Coin<SUI>, //手续费
         clock: &Clock,
         global_config: &GlobalConfig,
         ctx: &mut TxContext){
@@ -376,26 +380,27 @@ module perlite::perlite_market {
             assert!(column.status == 1, E_NOT_PUBLISH);
             //检查支付方式是否匹配
             assert!(object::id(payment_method) == column.payment_method, E_NOT_COLUMN_PAY_NOT_MATCH);
+
+            let cut_fee_amount = payment_method.fee * market.cut / 10000;
+            assert!(cut_fee.value() >= cut_fee_amount, E_CUT_FEE_NOT_ENOUGH);
             //检查支付金额是否足够
-            assert!(fee.value() >= payment_method.fee, E_NOT_FEE_NOT_ENOUGH);
+            let sub_fee_amount = payment_method.fee - cut_fee_amount;
+            assert!(fee.value() >= sub_fee_amount, E_NOT_FEE_NOT_ENOUGH);
             
 
             //计算手续费
-            let fee_amount = fee.value() * market.cut / 10000;
+            
             //扣除手续费
-            let cut_fee_coin = coin::split(fee, fee_amount, ctx);
-            let cut_fee_balance = coin::into_balance(cut_fee_coin);
+            let cut_fee_balance = coin::into_balance(cut_fee);
             let cut_fee_value = cut_fee_balance.value();
             market.balance.join(cut_fee_balance);
-
-            //剩余的钱都给column
-            let balance = fee.balance_mut();
-            let fee_balance = balance::withdraw_all(balance);
-            let fee_value = fee_balance.value();
-            column.balance.join(fee_balance);
+   
+            let sub_fee_balance = coin::into_balance(fee);
+            let sub_fee_value = sub_fee_balance.value();
+            //扣除支付金额
+            column.balance.join(sub_fee_balance);
             //生成订阅
             let now = clock.timestamp_ms();
-            
             let sub = SubscriptionCap{
                 id: object::new(ctx),
                 column_id: object::id(column),
@@ -403,11 +408,11 @@ module perlite::perlite_market {
                 sub_start_time: now,
             };
             let sub_id = object::id(&sub);
-            column.subscriptions.add(sub_id, 0);
             transfer::public_transfer(sub, ctx.sender());
+            column.subscriptions.add(sub_id, 0);
             //订阅事件
             let ent_time = now + payment_method.subscription_time;
-            perlite_event::subscribe_column_event(ctx.sender(), object::id(column), now, ent_time, column.payment_method, fee_value, cut_fee_value, payment_method.coin_type);
+            perlite_event::subscribe_column_event(ctx.sender(), object::id(column), now, ent_time, column.payment_method, sub_fee_value, cut_fee_value, payment_method.coin_type);
     }
 
     public entry fun renew_subscription(
@@ -415,7 +420,8 @@ module perlite::perlite_market {
         market: &mut Market,
         column: &mut Column,
         payment_method: &PaymentMethod,
-        fee: &mut Coin<SUI>, //支付费用
+        fee: Coin<SUI>, //支付费用
+        cut_fee: Coin<SUI>, //手续费
         clock: &Clock,
         global_config: &GlobalConfig,
         ctx: &mut TxContext){
@@ -423,8 +429,12 @@ module perlite::perlite_market {
             perlite_version::assert_valid_version(global_config);
                         //检查支付方式是否匹配
             assert!(object::id(payment_method) == column.payment_method, E_NOT_COLUMN_PAY_NOT_MATCH);
-                        //检查支付金额是否足够
-            assert!(fee.value() >= payment_method.fee, E_NOT_FEE_NOT_ENOUGH);
+            let cut_fee_amount = payment_method.fee * market.cut / 10000;
+            assert!(cut_fee.value() >= cut_fee_amount, E_CUT_FEE_NOT_ENOUGH);
+            //检查支付金额是否足够
+            let sub_fee_amount = payment_method.fee - cut_fee_amount;
+            assert!(fee.value() >= sub_fee_amount, E_NOT_FEE_NOT_ENOUGH);
+
             //检查是否是这个专栏的订阅者
             let sub_id = object::id(sub);
             assert!(column.subscriptions.contains(sub_id), E_COLUMN_SUBSCRIPTION_NOT_EXIST);
@@ -440,24 +450,22 @@ module perlite::perlite_market {
             };
 
             //计算手续费
-            let fee_amount = fee.value() * market.cut / 10000;
+            
             //扣除手续费
-            let cut_fee_coin = coin::split(fee, fee_amount, ctx);
-            let cut_fee_balance = coin::into_balance(cut_fee_coin);
+            let cut_fee_balance = coin::into_balance(cut_fee);
             let cut_fee_value = cut_fee_balance.value();
             market.balance.join(cut_fee_balance);
-
-            //剩余的钱都给column
-            let balance = fee.balance_mut();
-            let fee_balance = balance::withdraw_all(balance);
-            let fee_value = fee_balance.value();
-            column.balance.join(fee_balance);
+   
+            let sub_fee_balance = coin::into_balance(fee);
+            let sub_fee_value = sub_fee_balance.value();
+            //扣除支付金额
+            column.balance.join(sub_fee_balance);
             //更新订阅时间
             sub.sub_start_time = clock.timestamp_ms();
 
             //续费事件
             let ent_time = now + payment_method.subscription_time;
-            perlite_event::renew_column_event(ctx.sender(), object::id(column), now, ent_time, column.payment_method, fee_value, cut_fee_value, payment_method.coin_type);
+            perlite_event::renew_column_event(ctx.sender(), object::id(column), now, ent_time, column.payment_method, sub_fee_value, cut_fee_value, payment_method.coin_type);
     }
 
     //专栏管理员提取余额
