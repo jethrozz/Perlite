@@ -3,55 +3,32 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { CyberpunkDivider } from "@/components/cyberpunk-divider";
 import { ColumnCard } from "@/components/column-card";
-import { useQuery } from "@tanstack/react-query";
 import { useCurrentAccount } from "@mysten/dapp-kit";
-
-interface Column {
-  id: number;
-  title: string;
-  description: string;
-  thumbnailUrl: string | null;
-  creatorId: number;
-  articleCount: number;
-  isHot: boolean;
-  isNew: boolean;
-}
-
-interface Creator {
-  id: number;
-  username: string;
-  bio: string | null;
-  avatar: string | null;
-}
+import { getAllColumns } from "@/contract/perlite_column";
+import {
+  ColumnOtherInfo,
+  Installment,
+  UpdateMethod,
+  PaymentMethod,
+} from "@shared/data";
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const currentAccount = useCurrentAccount();
+  const [columns, setColumns] = useState<ColumnOtherInfo[]>([]);
   // Check if user is authenticated
   useEffect(() => {
     if (currentAccount) {
       setIsAuthenticated(true);
     }
-  }, [currentAccount]);
 
-  // Fetch hot columns
-  const { data: hotColumns = [] } = useQuery({
-    queryKey: ["/api/columns/hot"],
-  });
-
-  // Fetch categories
-  const { data: categories = [] } = useQuery({
-    queryKey: ["/api/categories"],
-  });
-
-  // Count columns per category
-  const getColumnCount = (categoryId: number) => {
-    // This is just a placeholder calculation
-    // In a real app, you'd want to fetch this data from the API
-    return Math.floor(Math.random() * 30) + 5;
-  };
-
-  // Top creators data removed as per requirements
+    // 加载知识库列表
+    const fetchHotColums = async () => {
+      let cols = await getAllColumns();
+      setColumns(cols);
+    };
+    fetchHotColums();
+  }, [currentAccount, setColumns]);
 
   return (
     <>
@@ -110,25 +87,23 @@ export default function Home() {
         <CyberpunkDivider className="mb-8" />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {hotColumns.map((column: Column) => (
+          {columns.map((column: ColumnOtherInfo) => (
             <ColumnCard
               key={column.id}
               id={column.id}
-              title={column.title}
-              description={column.description}
-              thumbnailUrl={column.thumbnailUrl || undefined}
-              creatorId={column.creatorId}
+              title={column.name}
+              description={column.desc}
+              thumbnailUrl={column.cover_img_url || undefined}
+              price={column.payment_method?.fee}
               // This is a limitation in the sample data - in a real app we'd fetch creator names
-              creatorName={`创作者 ${column.creatorId}`}
-              articleCount={column.articleCount}
-              isHot={column.isHot}
-              isNew={column.isNew}
-              isAuthenticated={isAuthenticated}
+              creatorName={column.creator}
+              createdAt={column.update_at.toLocaleDateString()}
+              paymentId={column.payment_method?.id}
             />
           ))}
 
           {/* Render placeholders if no hot columns */}
-          {hotColumns.length === 0 && (
+          {columns.length === 0 && (
             <>
               {[1, 2, 3, 4].map((i) => (
                 <div

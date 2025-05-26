@@ -1,5 +1,5 @@
 export const PACKAGE_ID =
-  "0x40a58aab5791e421722e0eb7aa452b9b2e35ce5ad3e78ed7719b893e7f2f0b13";
+  "0xed4f3a658b14dfd565e1b8beecd7949f3966bbe13cdd2837d1afd6391227bca3";
 export const DIR_TYPE = PACKAGE_ID + "::perlite_sync::Directory";
 export const FILE_TYPE = PACKAGE_ID + "::perlite_sync::File";
 export const COLUMN_CAP_TYPE = PACKAGE_ID + "::perlite_market::ColumnCap";
@@ -10,9 +10,11 @@ export const PAYMENT_TYPE = PACKAGE_ID + "::perlite_market::PaymentMethod";
 export const SUBSCRIPTION_TYPE =
   PACKAGE_ID + "::perlite_market::SubscriptionCap";
 export const MARKET_CONFIG_ID =
-  "0xd0abf4408ebb61708033cbba349b72532ed93debd70f8dda54568050fd0d9905";
+  "0x374ab0e737d8f0b8ae9ee355642a89e1ba9523947a76fffdbafe5239cce0f940";
+export const MARKET_ID =
+  "0xcfddfba6eef023c90d4a30cdbd5ecc722b115b428c8970f496561de920b3503d";
 export const GLOBAL_CONFIG_ID =
-  "0xfebf97b774f35cd407de195e6c0a9f63e2e24a4ac949785ce78e824533fd3a19";
+  "0x70fd46c2c537dfefc3896adebb08f391b20fec8388db9377a9b4afb48ba70784";
 
 export const GRAPHQL_URL = "https://sui-testnet.mystenlabs.com/";
 export const NET_WORK = "testnet";

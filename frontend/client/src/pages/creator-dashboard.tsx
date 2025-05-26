@@ -28,18 +28,17 @@ import {
   Users,
   Plus,
   Edit,
-  Newspaper,
   Calendar,
   Eye,
-  ChevronRight,
+  HardDriveUpload,
   X,
   Trash2,
   DollarSign,
+  Newspaper,
 } from "lucide-react";
 import {
   useCurrentAccount,
   useSignAndExecuteTransaction,
-  useSuiClient,
 } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
 import { useNetworkVariable } from "@/networkConfig";
@@ -153,7 +152,10 @@ export default function CreatorDashboard() {
       });
       checkFailed = true;
     }
-    if (formData.paymentType === "1" && parseInt(formData.subscriptionDays) > 0 ) {
+    if (
+      formData.paymentType === "1" &&
+      parseInt(formData.subscriptionDays) > 0
+    ) {
       toast({
         title: "Error",
         description: "Subscription days is required for subscription type",
@@ -211,16 +213,18 @@ export default function CreatorDashboard() {
       target: `${packageId}::perlite_market::create_payment_method`,
       arguments: [
         tx.pure.u8(parseInt(formData.paymentType)),
-        tx.pure.string("0000000000000000000000000000000000000000000000000000000000000002::sui::SUI"),
+        tx.pure.string(
+          "0000000000000000000000000000000000000000000000000000000000000002::sui::SUI",
+        ),
         tx.pure.u64(9),
-        tx.pure.u64(parseInt(formData.price)*1000000000),
+        tx.pure.u64(parseInt(formData.price) * 1000000000),
         tx.pure.u64(parseInt(formData.subscriptionDays)),
         tx.object(marketConfigId),
-        tx.object(globalConfigId)
-      ]
+        tx.object(globalConfigId),
+      ],
     });
     //formData.startDate
-    let since = new Date(formData.startDate).getTime()
+    let since = new Date(formData.startDate).getTime();
     //create_update_method
     let updateMethod = tx.moveCall({
       target: `${packageId}::perlite_market::create_update_method`,
@@ -228,9 +232,9 @@ export default function CreatorDashboard() {
         tx.pure.u64(since),
         tx.pure.u64(formData.intervalDays),
         tx.pure.u64(formData.updateEpisodes),
-        tx.object(globalConfigId)
-      ]
-    })
+        tx.object(globalConfigId),
+      ],
+    });
     //create_column
 
     tx.moveCall({
@@ -244,8 +248,8 @@ export default function CreatorDashboard() {
         tx.pure.bool(formData.enableRating),
         tx.pure.u64(formData.plannedEpisodes),
         tx.object("0x6"),
-        tx.object(globalConfigId)
-      ]
+        tx.object(globalConfigId),
+      ],
     });
 
     try {
@@ -253,18 +257,21 @@ export default function CreatorDashboard() {
       signAndExecuteTransaction(
         { transaction: tx, chain: chain },
         {
-            onSuccess: (result) => {
-                // 成功时打印结果
-                alert("Transaction successful: " + JSON.stringify(result));
-                setShowCreateModal(false);
-            },
-            onError: (error) => {
-               alert("Transaction successful: " + JSON.stringify(error));
-                console.error("Transaction failed:", error);
-            },
+          onSuccess: (result) => {
+            // 成功时打印结果
+            alert("Create successful: " + result.digest);
+            setShowCreateModal(false);
+            setTimeout(() => {
+              window.location.reload();
+            }, 800);
+          },
+          onError: (error) => {
+            alert("Failed to create column. " + JSON.stringify(error));
+            console.error("Transaction failed:", error);
+          },
         },
       );
-      
+
       resetForm();
       // 刷新专栏列表
       // 实际项目中应该重新获取数据
@@ -274,6 +281,48 @@ export default function CreatorDashboard() {
     }
   };
 
+  const publishColumn = async (columnId: string, columnCapId: string) => {
+    if (!currentAccount) {
+      toast({
+        title: "Error",
+        description: "Please Connected Your Wallet",
+        variant: "destructive",
+      });
+      return;
+    }
+    const tx = new Transaction();
+    tx.setSender(currentAccount.address);
+    tx.moveCall({
+      target: `${packageId}::perlite_market::publish_column`,
+      arguments: [
+        tx.object(columnId),
+        tx.object(columnCapId),
+        tx.object("0x6"),
+      ],
+    });
+
+    try {
+      signAndExecuteTransaction(
+        { transaction: tx, chain: chain },
+        {
+          onSuccess: (result) => {
+            // 成功时打印结果
+            alert("Publish Colum successful: " + result.digest);
+            setTimeout(() => {
+              window.location.reload();
+            }, 800);
+          },
+          onError: (error) => {
+            alert("Failed to publish column: " + JSON.stringify(error));
+            console.error("Failed to publish column:", error);
+          },
+        },
+      );
+    } catch (error) {
+      alert("Failed to publish column. Please try again.");
+      console.error("Failed to publish column:", error);
+    }
+  };
 
   if (!currentAccount) {
     return (
@@ -655,7 +704,9 @@ export default function CreatorDashboard() {
                             : "bg-gray-600 text-white"
                         }`}
                       >
-                        {column.other.status === 1 ? "📢 LIVE" : "📝 DRAFT"}
+                        {column.other.status === 1
+                          ? "📢 PUBLISHED"
+                          : "📝 DRAFT"}
                       </span>
                     </div>
                   </div>
@@ -666,17 +717,38 @@ export default function CreatorDashboard() {
                         {column.name}
                       </h3>
                       <div className="flex space-x-2">
-                      <Button
+                        <Link
+                          href={`/creator/column/episodes/${column.column_id}/${column.id}`}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-cyber-cyan hover:bg-cyber-dark"
+                            title="Manage Episodes"
+                          >
+                            <Newspaper className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Button
                           variant="ghost"
                           size="sm"
                           className="text-cyber-purple hover:bg-cyber-dark"
+                          onClick={() =>
+                            publishColumn(column.id, column.column_id)
+                          }
+                          disabled={
+                            column.other.status === 1 ||
+                            column.other.status === 2
+                          }
+                          title="Publish Column"
                         >
-                          <Newspaper className="h-4 w-4" />
+                          <HardDriveUpload className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
                           className="text-cyber-purple hover:bg-cyber-dark"
+                          title="Edit Column Base Info"
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -684,6 +756,7 @@ export default function CreatorDashboard() {
                           variant="ghost"
                           size="sm"
                           className="text-red-400 hover:bg-red-400/10"
+                          title="Delete Column"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -722,7 +795,8 @@ export default function CreatorDashboard() {
                       disabled={(column.other.balance || 0) === 0}
                     >
                       <DollarSign className="mr-2 h-4 w-4" />
-                      Withdraw Rewards ({column.other.balance/1000_000_000 || 0} SUI)
+                      Withdraw Rewards (
+                      {column.other.balance / 1000_000_000 || 0} SUI)
                     </Button>
 
                     <div className="flex justify-between items-center">

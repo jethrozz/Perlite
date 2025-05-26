@@ -32,6 +32,7 @@ export type File = {
   end_epoch: number;
   created_at: Date;
   updated_at: Date;
+  content: string;
 };
 
 export type ColumnCap = {
@@ -48,15 +49,20 @@ export type ColumnCap = {
 };
 export type ColumnOtherInfo = {
   id: string;
-  update_method: UpdateMethod|null;
-  payment_method: PaymentMethod|null;
+  name: string;
+  desc: string;
+  cover_img_url: string;
+  update_method: UpdateMethod | null;
+  payment_method: PaymentMethod | null;
   plan_installment_number: number; //计划期数
   all_installment: Array<Installment>;
+  all_installment_ids: Array<string>;
   balance: number;
   is_rated: boolean;
   status: number;
   subscriptions: number; //订阅者数量
   update_at: Date;
+  creator: string;
 };
 export type UpdateMethod = {
   id: string;
@@ -79,10 +85,17 @@ export type Installment = {
   no: number;
   files: Array<string>;
 };
+export type InstallmentWithFiles = {
+  id: string;
+  belong_column: string;
+  no: number;
+  files: Array<File>;
+};
 
-export type Subscription= {
-  id: string,
-  column_id: string,
-  created_at: number,
-  sub_start_time: number,
-}
+export type Subscription = {
+  id: string;
+  column_id: string;
+  created_at: Date;
+  sub_start_time: Date;
+  column: ColumnOtherInfo|null;
+};

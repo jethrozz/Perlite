@@ -8,6 +8,7 @@ import {
   NET_WORK,
   MARKET_CONFIG_ID,
   GLOBAL_CONFIG_ID,
+  MARKET_ID,
 } from "@/constants.ts";
 import { createNetworkConfig } from "@mysten/dapp-kit";
 
@@ -26,6 +27,7 @@ const { networkConfig, useNetworkVariable, useNetworkVariables } =
         globalConfigId: GLOBAL_CONFIG_ID,
         chain: "sui:devnet",
         url: getFullnodeUrl("devnet"),
+        marketId: MARKET_ID,
       },
     },
     testnet: {
@@ -41,6 +43,7 @@ const { networkConfig, useNetworkVariable, useNetworkVariables } =
         globalConfigId: GLOBAL_CONFIG_ID,
         chain: "sui:testnet",
         url: getFullnodeUrl("testnet"),
+        marketId: MARKET_ID,
       },
     },
     mainnet: {
@@ -56,6 +59,7 @@ const { networkConfig, useNetworkVariable, useNetworkVariables } =
         globalConfigId: GLOBAL_CONFIG_ID,
         chain: "sui:mainnet",
         url: getFullnodeUrl("mainnet"),
+        marketId: MARKET_ID,
       },
     },
   });

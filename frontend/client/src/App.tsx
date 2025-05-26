@@ -10,6 +10,8 @@ import Home from "@/pages/home";
 import Columns from "@/pages/columns";
 import ColumnDetail from "@/pages/column-detail";
 import CreatorDashboard from "@/pages/creator-dashboard";
+import ColumnEpisodes from "@/pages/column-episodes";
+import EpisodeDetail from "@/pages/episode-detail";
 import MyKnowledgeBase from "@/pages/my-knowledge-base";
 import KnowledgeBase from "@/pages/knowledge-base";
 import MySubscriptions from "@/pages/my-subscriptions";
@@ -45,6 +47,25 @@ function Router() {
       <Route path="/my-knowledge-base" component={MyKnowledgeBase} />
       <Route path="/creator/konwledge/base" component={KnowledgeBase} />
       <Route path="/creator/dashboard" component={CreatorDashboard} />
+      {/**创作者查看专栏 */}
+      <Route key="creator_col" path="/creator/column/episodes/:id/:cap_id">
+        {(params) => <ColumnEpisodes />}
+      </Route>
+      {/**创作者查看每一期 */}
+      <Route
+        key="creator_col_e"
+        path="/creator/columns/:id/:cap_id/episodes/:episodeId"
+      >
+        {(params) => <EpisodeDetail />}
+      </Route>
+      {/**订阅者查看专栏 */}
+      <Route key="sub_col" path="/sub/col/e/:id/:subId/:payId">
+        {(params) => <ColumnEpisodes />}
+      </Route>
+      {/**订阅者查看每一期 */}
+      <Route key="sub_col_e" path="/sub/col/:id/:subId/:payId/e/:episodeId/">
+        {(params) => <EpisodeDetail />}
+      </Route>
       <Route component={NotFound} />
     </Switch>
   );

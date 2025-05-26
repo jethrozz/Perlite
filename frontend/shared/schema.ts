@@ -45,6 +45,12 @@ export const columns = pgTable("columns", {
   isPublished: boolean("is_published").default(false).notNull(),
   isHot: boolean("is_hot").default(false).notNull(),
   isNew: boolean("is_new").default(true).notNull(),
+  // 支付相关字段
+  paymentType: integer("payment_type").default(0).notNull(), // 0: 买断, 1: 订阅
+  price: integer("price").default(0).notNull(), // 价格 (SUI)
+  subscriptionDays: integer("subscription_days").default(30), // 订阅天数
+  totalEarnings: integer("total_earnings").default(0).notNull(), // 总收入
+  availableRewards: integer("available_rewards").default(0).notNull(), // 可提取奖励
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

@@ -3,26 +3,41 @@ import { graphql } from "@mysten/sui/graphql/schemas/latest";
 import { DIR_TYPE, FILE_TYPE, GRAPHQL_URL } from "@/constants";
 import { PerliteVault, PerliteVaultDir, Directory, File } from "@shared/data";
 
-export const queryByAddress = graphql(`query GetObjectsByIDs($ids: [SuiAddress!]!) {
-  objects(
-    filter: {
-      objectIds: $ids
+export const getObjectsByType = graphql(`
+    query GetObjectsByType($type: String!, $cursor: String, $limit: Int) {
+        objects(filter: { type: $type }, first: $limit, after: $cursor) {
+            nodes {
+                asMoveObject {
+                    contents {
+                        json
+                    }
+                }
+            }
+            pageInfo {
+                hasNextPage
+                endCursor
+            }
+        }
     }
-  ) {
-                edges {
-                    node {
-                        asMoveObject {
-                            contents{
-                              type{
+`);
+export const queryByAddress = graphql(`
+    query GetObjectsByIDs($ids: [SuiAddress!]!) {
+        objects(filter: { objectIds: $ids }) {
+            edges {
+                node {
+                    asMoveObject {
+                        contents {
+                            type {
                                 repr
-                              }
-                              json
                             }
+                            json
                         }
                     }
                 }
-  }
-}`)
+            }
+        }
+    }
+`);
 
 export const queryByAddressAndType = graphql(`
     query ($address: SuiAddress!, $type: String!, $cursor: String) {
@@ -223,4 +238,3 @@ async function getUserOwnFile(
 
     return result;
 }
-

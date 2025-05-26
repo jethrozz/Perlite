@@ -493,16 +493,12 @@ module perlite::perlite_market {
     fun approve_internal(id: vector<u8>, sub: &SubscriptionCap, column: &Column, payment_method: &PaymentMethod, clock: &Clock): bool {
         let sub_id = object::id(sub);
         let pay_method_id = object::id(payment_method);
-        
+        //已存在的订阅者中没有这个订阅者
         if(!column.subscriptions.contains(sub_id)) {
             return false
         };
         
         if (pay_method_id != column.payment_method) {
-            return false
-        };
-        //已存在的订阅者中没有这个订阅者
-        if(!column.subscriptions.contains(sub_id)){
             return false
         };
         //检查是否过期
@@ -515,9 +511,9 @@ module perlite::perlite_market {
                 return false
             }
         };
-
+        return true
         // Check if the id has the right prefix
-        is_prefix(column.id.to_bytes(), id)
+        //is_prefix(column.pay_method_id.to_bytes(), id)
     }
 
     //订阅者权限校验

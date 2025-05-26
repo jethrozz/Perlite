@@ -103,8 +103,8 @@ export default function MyColumns() {
               title={column.name}
               description={column.description}
               thumbnailUrl={column.image_url || undefined}
-              creatorId={column.creator}
               creatorName={column.creator}
+              price={column.other.payment_method?.fee}
               updateMethod={JSON.stringify(column.other.update_method)}
               payMethod={JSON.stringify(column.other.payment_method)}
               planInstallmentNumber={column.other.plan_installment_number}
